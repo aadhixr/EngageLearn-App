@@ -2,31 +2,16 @@
 val debugKeystore = file("${rootDir}/debug.keystore")
 if (!debugKeystore.exists()) {
   val b64Keystore = file("${rootDir}/debug.keystore.base64")
-  if (b64Keystore.exists()) {
-    try {
-      val cleanedBase64 = b64Keystore.readText().replace("\\s".toRegex(), "")
-      val decodedBytes = java.util.Base64.getDecoder().decode(cleanedBase64)
-      debugKeystore.writeBytes(decodedBytes)
-    } catch (e: Exception) {
-      project.logger.warn("Could not decode debug.keystore.base64: ${e.message}")
-    }
+  val b64Content = if (b64Keystore.exists()) {
+    b64Keystore.readText()
+  } else {
+    "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"
   }
-  if (!debugKeystore.exists()) {
-    try {
-      ProcessBuilder(
-        "keytool", "-genkey", "-v",
-        "-keystore", debugKeystore.absolutePath,
-        "-storepass", "android",
-        "-alias", "androiddebugkey",
-        "-keypass", "android",
-        "-keyalg", "RSA",
-        "-keysize", "2048",
-        "-validity", "10000",
-        "-dname", "CN=Android Debug,O=Android,C=US"
-      ).inheritIO().start().waitFor()
-    } catch (e: Exception) {
-      project.logger.warn("Could not generate debug.keystore with keytool: ${e.message}")
-    }
+  try {
+    val cleanedBase64 = b64Content.replace("\\s".toRegex(), "")
+    debugKeystore.writeBytes(java.util.Base64.getDecoder().decode(cleanedBase64))
+  } catch (e: Exception) {
+    project.logger.warn("Could not write debug.keystore: ${e.message}")
   }
 }
 
