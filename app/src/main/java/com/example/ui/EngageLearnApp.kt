@@ -53,6 +53,7 @@ import com.example.ui.screens.ProfileScreen
 import com.example.ui.screens.ProgressScreen
 import com.example.ui.screens.QuizCentreScreen
 import com.example.ui.screens.QuizScreen
+import com.example.ui.screens.SplashScreen
 import com.example.ui.screens.SubjectDetailScreen
 import com.example.ui.screens.SubjectsScreen
 import com.example.ui.screens.TeacherHodPortalScreen
@@ -60,6 +61,7 @@ import com.example.ui.screens.TestingResearchScreen
 import com.example.ui.theme.MyApplicationTheme
 
 sealed class Screen {
+    data object Splash : Screen()
     data object Login : Screen()
     data object Home : Screen()
     data object Subjects : Screen()
@@ -91,7 +93,7 @@ enum class NavDestination(
 @Composable
 fun EngageLearnApp() {
     var isDarkTheme by remember { mutableStateOf(false) }
-    var currentScreen by remember { mutableStateOf<Screen>(Screen.Login) }
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Splash) }
     var showNotificationsDialog by remember { mutableStateOf(false) }
 
     val user by EngageDataRepository.currentUser.collectAsState()
@@ -104,7 +106,7 @@ fun EngageLearnApp() {
     val assignments by EngageDataRepository.teacherAssignments.collectAsState()
 
     // Handle back button logically
-    BackHandler(enabled = currentScreen !is Screen.Login && currentScreen !is Screen.Home) {
+    BackHandler(enabled = currentScreen !is Screen.Splash && currentScreen !is Screen.Login && currentScreen !is Screen.Home) {
         currentScreen = when (currentScreen) {
             is Screen.SubjectDetail -> Screen.Subjects
             is Screen.MicroLesson -> {
@@ -118,13 +120,20 @@ fun EngageLearnApp() {
     }
 
     MyApplicationTheme(darkTheme = isDarkTheme) {
-        if (currentScreen is Screen.Login) {
-            LoginScreen(
-                onLoginSuccess = { role ->
-                    currentScreen = if (role == "Teacher" || role == "HOD") Screen.FacultyPortal else Screen.Home
-                }
-            )
-        } else {
+        when (currentScreen) {
+            is Screen.Splash -> {
+                SplashScreen(
+                    onContinue = { currentScreen = Screen.Login }
+                )
+            }
+            is Screen.Login -> {
+                LoginScreen(
+                    onLoginSuccess = { role ->
+                        currentScreen = if (role == "Teacher" || role == "HOD") Screen.FacultyPortal else Screen.Home
+                    }
+                )
+            }
+            else -> {
             Scaffold(
                 topBar = {
                     AppTopBar(
@@ -202,8 +211,8 @@ fun EngageLearnApp() {
                         label = "screen_transition"
                     ) { screen ->
                         when (screen) {
-                            is Screen.Login -> {
-                                // Not reached here as handled in outer branch
+                            is Screen.Splash, is Screen.Login -> {
+                                // Handled in outer branches
                             }
 
                             is Screen.Home -> {
@@ -339,8 +348,9 @@ fun EngageLearnApp() {
                 }
             }
         }
+    }
 
-        // Global Notifications Dialog
+    // Global Notifications Dialog
         if (showNotificationsDialog) {
             NotificationsDialog(
                 notifications = notifications,
